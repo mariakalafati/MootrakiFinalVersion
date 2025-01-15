@@ -57,6 +57,7 @@ class MainActivity : ComponentActivity() {
                             Calendar(viewModel = viewModel)
                         }
                         composable(Screen.Charts.route) { Charts() }
+                        composable(Screen.Breathing.route) { VideoScreen() }
                         composable(Screen.Affirmations.route) { Affirmations() }
                     }
                 }
@@ -71,6 +72,7 @@ class MainActivity : ComponentActivity() {
             Screen.Home,
             Screen.Calendar,
             Screen.Charts,
+            Screen.Breathing,
             Screen.Affirmations
         )
 
@@ -87,6 +89,7 @@ class MainActivity : ComponentActivity() {
                                 Screen.Home -> painterResource(id = R.drawable.ic_home)
                                 Screen.Calendar -> painterResource(id = R.drawable.ic_calendar)
                                 Screen.Charts -> painterResource(id = R.drawable.ic_charts)
+                                Screen.Breathing -> painterResource(id = R.drawable.ic_breathing)
                                 Screen.Affirmations -> painterResource(id = R.drawable.ic_affirmations)
                             },
                             contentDescription = screen.route
