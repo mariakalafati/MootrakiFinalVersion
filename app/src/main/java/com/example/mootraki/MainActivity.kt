@@ -56,7 +56,10 @@ class MainActivity : ComponentActivity() {
                             val viewModel: CalendarEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
                             Calendar(viewModel = viewModel)
                         }
-                        composable(Screen.Charts.route) { Charts() }
+                        composable(Screen.Charts.route) {
+                            val chartviewModel: ChartViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                            Charts(viewModel = chartviewModel)
+                        }
                         composable(Screen.Breathing.route) { VideoScreen() }
                         composable(Screen.Affirmations.route) { Affirmations() }
                     }

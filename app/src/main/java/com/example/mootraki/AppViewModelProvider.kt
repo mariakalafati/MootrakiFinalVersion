@@ -24,6 +24,12 @@ object AppViewModelProvider {
             val repository = application.container.entriesRepository
             CalendarEntryViewModel(repository)
         }
+        // Initializer for ChartViewModel
+        initializer {
+            val application = mootrakiApplication()
+            val repository = application.container.entriesRepository
+            ChartViewModel(repository)
+        }
     }
 }
 
