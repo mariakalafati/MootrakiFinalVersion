@@ -3,7 +3,9 @@ package com.example.mootraki
 import android.icu.text.DateFormat
 import android.icu.util.Calendar
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -17,12 +19,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mootraki.data.Entry
 import java.util.Locale
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 
 @Composable
 fun Calendar(modifier: Modifier = Modifier, viewModel: CalendarEntryViewModel) {
     val today = Calendar.getInstance() // Using Calendar for compatibility
     val currentMonth = remember { mutableStateOf(today) }
     val allEntries by viewModel.allEntries.collectAsState()
+    val selectedEntry by viewModel.selectedEntry.collectAsState()
 
     Column(
         modifier
@@ -71,17 +76,48 @@ fun Calendar(modifier: Modifier = Modifier, viewModel: CalendarEntryViewModel) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Calendar Grid
-        CalendarGrid(currentMonth.value)
+        CalendarGrid(calendar = currentMonth.value, onDateSelected = { selectedDate ->
+            viewModel.fetchEntryForDate(selectedDate) // Fetch the entry for the selected date
+        })
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Display selected date's entry or a placeholder message
+        if (selectedEntry != null) {
+
+            Text(
+                text = "${selectedEntry?.date}: ${selectedEntry?.notes}",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium)
+                    .padding(16.dp)
+            )
+        } else {
+            Text(
+                text = "No entry for this day.",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium)
+                    .padding(16.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Entry list with scrolling and reduced height
+        Text("Recent Entries:", style = MaterialTheme.typography.titleMedium)
+        EntryList(entries = allEntries)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         InsertDummyButton(viewModel)
-
-        // Λίστα καταχωρήσεων
-        Text("Καταχωρήσεις:", style = MaterialTheme.typography.titleMedium)
-        EntryList(entries = allEntries)
     }
 }
+
 @Composable
 fun InsertDummyButton(viewModel: CalendarEntryViewModel) {
     Button(onClick = { viewModel.insertDummyEntries() }) {
@@ -91,16 +127,21 @@ fun InsertDummyButton(viewModel: CalendarEntryViewModel) {
 
 @Composable
 fun EntryList(entries: List<Entry>) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp) // Reduced height to half
+            .verticalScroll(rememberScrollState()) // Make scrollable
+    ) {
         entries.forEach { entry ->
             Text(
                 text = "${entry.date}: ${entry.notes}",
-                style = MaterialTheme.typography.bodyLarge, // Αυξημένο μέγεθος γραμματοσειράς
+                style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier
-                    .padding(vertical = 8.dp) // Αυξημένο padding για καλύτερη ευθυγράμμιση
+                    .padding(vertical = 8.dp)
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium) // Προσθήκη φόντου για πλαίσιο
-                    .padding(16.dp) // Εσωτερικό padding του πλαισίου
+                    .background(MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium)
+                    .padding(16.dp)
             )
         }
     }
@@ -129,8 +170,7 @@ fun MonthSelector(currentMonth: MutableState<Calendar>) {
 }
 
 @Composable
-fun CalendarGrid(calendar: Calendar) {
-    // Get the first day of the month and the total number of days in the month
+fun CalendarGrid(calendar: Calendar, onDateSelected: (String) -> Unit) {
     val firstDayOfMonth = getFirstDayOfMonth(calendar)
     val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
 
@@ -145,7 +185,7 @@ fun CalendarGrid(calendar: Calendar) {
             listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach { day ->
                 Text(
                     text = day,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f), // Use theme's onBackground with reduced opacity
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                     fontSize = 14.sp
                 )
             }
@@ -165,8 +205,10 @@ fun CalendarGrid(calendar: Calendar) {
                 for (col in 0..6) {
                     val day = row * 7 + col - firstDayOfMonth + 1
                     if (day in 1..daysInMonth) {
-                        val isToday = isToday(day, calendar)
-                        CalendarDay(day = day, isToday = isToday)
+                        val date = "${calendar.get(Calendar.YEAR)}-${String.format("%02d", calendar.get(Calendar.MONTH) + 1)}-${String.format("%02d", day)}"
+                        CalendarDay(day = day, isToday = isToday(day, calendar)) {
+                            onDateSelected(date) // Pass the date string back to the callback
+                        }
                     } else {
                         Spacer(modifier = Modifier.size(40.dp))
                     }
@@ -178,20 +220,21 @@ fun CalendarGrid(calendar: Calendar) {
 
 
 @Composable
-fun CalendarDay(day: Int, isToday: Boolean) {
+fun CalendarDay(day: Int, isToday: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(48.dp) // Μεγαλύτερο μέγεθος για τα πλαίσια των ημερών
+            .size(48.dp)
             .background(
-                if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, // Χρώμα για σήμερα
+                if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                 shape = CircleShape
-            ),
+            )
+            .clickable { onClick() }, // Add clickable action
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = day.toString(),
             color = if (isToday) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 16.sp // Μεγαλύτερη γραμματοσειρά για καλύτερη ορατότητα
+            fontSize = 16.sp
         )
     }
 }

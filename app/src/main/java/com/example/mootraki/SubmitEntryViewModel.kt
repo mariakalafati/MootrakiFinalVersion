@@ -6,38 +6,39 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.mootraki.data.Entry
 import com.example.mootraki.data.EntriesRepository
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * ViewModel to validate and insert entries in the Room database.
  */
 class SubmitEntryViewModel(private val entriesRepository: EntriesRepository) : ViewModel() {
 
-    /**
-     * Holds current entry UI state.
-     */
     var entryUiState by mutableStateOf(EntryUiState())
         private set
 
-    /**
-     * Updates the [entryUiState] with the provided entry details. Triggers validation.
-     */
     fun updateUiState(entryDetails: EntryDetails) {
         entryUiState =
             EntryUiState(entryDetails = entryDetails, isEntryValid = validateInput(entryDetails))
     }
 
-    /**
-     * Submits an [Entry] to the Room database.
-     */
     suspend fun submitEntry() {
         if (validateInput()) {
-            entriesRepository.insertEntry(entryUiState.entryDetails.toEntry())
+            // Ensure the date is set correctly
+            val updatedDetails = entryUiState.entryDetails.copy(
+                date = if (entryUiState.entryDetails.date.isBlank()) {
+                    // Use the current date if none is set
+                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                } else {
+                    entryUiState.entryDetails.date
+                }
+            )
+
+            entriesRepository.insertEntry(updatedDetails.toEntry())
         }
     }
 
-    /**
-     * Validates the input from the UI.
-     */
     private fun validateInput(uiState: EntryDetails = entryUiState.entryDetails): Boolean {
         return with(uiState) {
             mood != -1 && emotions.isNotEmpty() && note.isNotBlank()

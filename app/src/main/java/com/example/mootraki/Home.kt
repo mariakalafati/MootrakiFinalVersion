@@ -1,5 +1,6 @@
 package com.example.mootraki
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -32,137 +33,149 @@ fun Home(
     navController: NavController,
     viewModel: SubmitEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    val date = remember {
-        val calendar = Calendar.getInstance()
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        dateFormat.format(calendar.time)
-    }
-
-    val entryUiState = viewModel.entryUiState
+    val snackbarHostState = remember { SnackbarHostState() } // Snackbar state
     val coroutineScope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp)
         ) {
+            val date = remember {
+                val calendar = Calendar.getInstance()
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                dateFormat.format(calendar.time)
+            }
+
+            val entryUiState = viewModel.entryUiState
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = date,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = 20.sp
+                )
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
-                text = date,
+                text = "How was your day?",
                 color = MaterialTheme.colorScheme.onBackground,
-                fontSize = 20.sp
+                fontSize = 18.sp
             )
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
-                tint = MaterialTheme.colorScheme.onBackground
-            )
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = "How was your day?",
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 18.sp
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            listOf("😀", "😊", "😐", "☹️", "😢").forEachIndexed { index, emoji ->
-                MoodOption(
-                    emoji = emoji,
-                    isSelected = entryUiState.entryDetails.mood == index,
-                    onClick = {
-                        viewModel.updateUiState(entryUiState.entryDetails.copy(mood = index))
-                    }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Emotions",
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 16.sp
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(4),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(
-                listOf("Excited", "Relaxed", "Happy", "Tired", "Annoyed", "Stressed", "Bored", "Hopeful")
-            ) { emotion ->
-                EmotionOption(
-                    emotion = emotion,
-                    isSelected = entryUiState.entryDetails.emotions.contains(emotion),
-                    onClick = {
-                        val updatedEmotions = if (entryUiState.entryDetails.emotions.contains(emotion)) {
-                            entryUiState.entryDetails.emotions - emotion
-                        } else {
-                            entryUiState.entryDetails.emotions + emotion
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                listOf("😀", "😊", "😐", "☹️", "😢").forEachIndexed { index, emoji ->
+                    MoodOption(
+                        emoji = emoji,
+                        isSelected = entryUiState.entryDetails.mood == index,
+                        onClick = {
+                            viewModel.updateUiState(entryUiState.entryDetails.copy(mood = index))
                         }
-                        viewModel.updateUiState(entryUiState.entryDetails.copy(emotions = updatedEmotions))
-                    }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Today's note",
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 18.sp
-        )
-
-        BasicTextField(
-            value = entryUiState.entryDetails.note,
-            onValueChange = {
-                viewModel.updateUiState(entryUiState.entryDetails.copy(note = it))
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-                .background(MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.small)
-                .padding(8.dp),
-            textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp)
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Button(
-            onClick = {
-                coroutineScope.launch {
-                    if (entryUiState.isEntryValid) {
-                        viewModel.submitEntry()
-                        navController.popBackStack()
-                    }
+                    )
                 }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-        ) {
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
-                text = "Done",
-                color = MaterialTheme.colorScheme.onPrimary,
+                text = "Emotions",
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 16.sp
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(4),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(
+                    listOf("Excited", "Relaxed", "Happy", "Tired", "Annoyed", "Stressed", "Bored", "Hopeful")
+                ) { emotion ->
+                    EmotionOption(
+                        emotion = emotion,
+                        isSelected = entryUiState.entryDetails.emotions.contains(emotion),
+                        onClick = {
+                            val updatedEmotions = if (entryUiState.entryDetails.emotions.contains(emotion)) {
+                                entryUiState.entryDetails.emotions - emotion
+                            } else {
+                                entryUiState.entryDetails.emotions + emotion
+                            }
+                            viewModel.updateUiState(entryUiState.entryDetails.copy(emotions = updatedEmotions))
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Today's note",
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 18.sp
+            )
+
+            BasicTextField(
+                value = entryUiState.entryDetails.note,
+                onValueChange = {
+                    viewModel.updateUiState(entryUiState.entryDetails.copy(note = it))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.small)
+                    .padding(8.dp),
+                textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp)
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        if (entryUiState.isEntryValid) {
+                            viewModel.submitEntry()
+                            navController.navigate("calendar") {
+                                // Optionally clear the back stack to prevent users from going back to the current screen
+                                popUpTo("home") { inclusive = true }
+                            }
+                        } else {
+                            snackbarHostState.showSnackbar("Oops, seams like you've missed a reflection field.")
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text(
+                    text = "Done",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontSize = 16.sp
+                )
+            }
         }
     }
 }
@@ -220,11 +233,3 @@ fun EmotionOption(emotion: String, isSelected: Boolean, onClick: () -> Unit) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun HomePreview() {
-    MootrakiTheme {
-        val navController = rememberNavController() // Mock NavController for preview
-        Home(navController = navController)
-    }
-}

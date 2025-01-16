@@ -51,10 +51,13 @@ class MainActivity : ComponentActivity() {
                         startDestination = Screen.Home.route,
                         Modifier.padding(innerPadding)
                     ) {
-                        composable(Screen.Home.route) { Home(navController) }
+                        composable(Screen.Home.route) {
+                            val homeviewModel: SubmitEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                            Home(navController, viewModel = homeviewModel)
+                        }
                         composable(Screen.Calendar.route) {
-                            val viewModel: CalendarEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
-                            Calendar(viewModel = viewModel)
+                            val calendarviewModel: CalendarEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                            Calendar(viewModel = calendarviewModel)
                         }
                         composable(Screen.Charts.route) {
                             val chartviewModel: ChartViewModel = viewModel(factory = AppViewModelProvider.Factory)
