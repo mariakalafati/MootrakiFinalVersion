@@ -1,32 +1,14 @@
-/*
- * Copyright (C) 2023 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.example.mootraki
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import com.example.mootraki.ui.theme.MootrakiTheme
-
-import androidx.compose.material3.*
-import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -34,46 +16,61 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.mootraki.ui.theme.MootrakiTheme
 import java.util.Locale
 
+/**
+ * Main Activity class responsible for initializing the app and setting the UI content.
+ */
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MootrakiTheme {
+                // Remember the NavController for navigation between screens
                 val navController = rememberNavController()
                 Scaffold(
-                    bottomBar = { BottomNavigationBar(navController) }
+                    bottomBar = { BottomNavigationBar(navController) } // Bottom navigation bar
                 ) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = Screen.Home.route,
+                        startDestination = Screen.Home.route, // Define the start destination
                         Modifier.padding(innerPadding)
                     ) {
+                        // Define the composable destinations
                         composable(Screen.Home.route) {
-                            val homeviewModel: SubmitEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
-                            Home(navController, viewModel = homeviewModel)
+                            val homeViewModel: SubmitEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                            Home(navController, viewModel = homeViewModel)
                         }
                         composable(Screen.Calendar.route) {
-                            val calendarviewModel: CalendarEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
-                            Calendar(viewModel = calendarviewModel)
+                            val calendarViewModel: CalendarEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                            Calendar(viewModel = calendarViewModel)
                         }
                         composable(Screen.Charts.route) {
-                            val chartviewModel: ChartViewModel = viewModel(factory = AppViewModelProvider.Factory)
-                            Charts(viewModel = chartviewModel)
+                            val chartViewModel: ChartViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                            Charts(viewModel = chartViewModel)
                         }
-                        composable(Screen.Breathing.route) { VideoScreen() }
-                        composable(Screen.Affirmations.route) { Affirmations() }
+                        composable(Screen.Breathing.route) {
+                            VideoScreen()
+                        }
+                        composable(Screen.Affirmations.route) {
+                            Affirmations()
+                        }
                     }
                 }
             }
         }
-
     }
 
+    /**
+     * Composable function to display the bottom navigation bar.
+     *
+     * @param navController Controller to handle navigation between screens.
+     */
     @Composable
     fun BottomNavigationBar(navController: NavController) {
+        // List of screens for navigation
         val screens = listOf(
             Screen.Home,
             Screen.Calendar,
@@ -82,7 +79,7 @@ class MainActivity : ComponentActivity() {
             Screen.Affirmations
         )
 
-        // Observe the current back stack entry
+        // Observe the current back stack entry to highlight the selected screen
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination?.route
 
@@ -101,15 +98,17 @@ class MainActivity : ComponentActivity() {
                             contentDescription = screen.route
                         )
                     },
-                    label = { Text(screen.route.replaceFirstChar {
-                        if (it.isLowerCase()) it.titlecase(
-                            Locale.getDefault()
-                        ) else it.toString()
-                    }) },
+                    label = {
+                        Text(
+                            screen.route.replaceFirstChar {
+                                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                            }
+                        )
+                    },
                     selected = currentDestination == screen.route,
                     onClick = {
                         navController.navigate(screen.route) {
-                            // Ensure only a single instance of each destination
+                            // Ensure a single instance of each destination
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }
