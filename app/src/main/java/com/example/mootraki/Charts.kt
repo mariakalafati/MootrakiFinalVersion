@@ -91,7 +91,7 @@ fun Charts(viewModel: ChartViewModel) {
 
             // Bar Chart
             Text(
-                text = "Review your Year 2024: Bar Chart: Represents the distribution of $selectedMood mood for each month.",
+                text = "Review your Year 2024: Bar Chart: Represents the distribution of your selected mood for each month.",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(16.dp)
             )
