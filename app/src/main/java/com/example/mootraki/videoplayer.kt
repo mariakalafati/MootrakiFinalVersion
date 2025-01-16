@@ -16,18 +16,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.delay
-//first go to C:\Users\DimitraP\AndroidStudioProjects\myapp\app\src\main\res\raw and drag and drop the videos there
-//call all of this with MaterialTheme {
-//                Surface {
-//                    VideoScreen()
-//                }
-//            }
 
-
-// Data class for video categories
 data class VideoCategory(val name: String, val videoResId: Int, val duration: Int)
 
-// List of video categories
 val videoCategories = listOf(
     VideoCategory("Minimalist - 1 min", R.raw.video1, 60),
     VideoCategory("Sea - 2 min", R.raw.video2, 120),
@@ -35,48 +26,37 @@ val videoCategories = listOf(
     VideoCategory("Soft - 4 min", R.raw.video4, 240),
     VideoCategory("Sky - 5 min", R.raw.video5, 300)
 )
-/*enum class TimerCategory(val seconds: Int) {
-    SHORT(10),   // 10 seconds
-    MEDIUM(30),  // 30 seconds
-    LONG(60),    // 60 seconds
-    EXTRA_LONG(120), // 120 seconds
-    EXTREME(300) // 300 seconds
-}*/
 
-// Composable for the video screen
 @Composable
 fun VideoScreen() {
-    var selectedVideoCategory by remember { mutableStateOf(videoCategories[0]) } // Default to the first category
+    var selectedVideoCategory by remember { mutableStateOf(videoCategories[0]) }
     var isPlaying by remember { mutableStateOf(false) }
-    var timeRemains by remember { mutableStateOf(selectedVideoCategory.duration) } // Timer state
-    var phaseIndex by remember { mutableStateOf(0) } // Track the current phase index
+    var timeRemains by remember { mutableStateOf(selectedVideoCategory.duration) }
+    var phaseIndex by remember { mutableStateOf(0) }
 
 
-    // Video Player with Play/Pause Button
     LocalVideoPlayer(videoResId = selectedVideoCategory.videoResId, isPlaying = isPlaying)
     DropDownVideoCategories(selectedVideoCategory) { category ->
         selectedVideoCategory = category
-        timeRemains = category.duration // Update timer duration when category changes
-        phaseIndex = 0 // Reset phase index to start from "Breathe in"
-        isPlaying = false // Stop the video when changing categories
+        timeRemains = category.duration
+        phaseIndex = 0
+        isPlaying = false
     }
     CountdownTimer(
         duration = timeRemains,
         isPlaying = isPlaying,
         phaseIndex = phaseIndex,
         onPlayPause = { playing, newPhaseIndex ->
-            isPlaying = playing // Update the play state based on timer
-            phaseIndex = newPhaseIndex // Update the phase index
+            isPlaying = playing
+            phaseIndex = newPhaseIndex
         },
         onVideoPlay = { play ->
-            isPlaying = play // Control video playback based on timer state
+            isPlaying = play
         }
     )
 
 }
 
-// Composable for the dropdown menu
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropDownVideoCategories(selectedCategory: VideoCategory, onCategorySelected: (VideoCategory) -> Unit) {
     val dropDownOpen = remember { mutableStateOf(false) }
@@ -97,7 +77,7 @@ fun DropDownVideoCategories(selectedCategory: VideoCategory, onCategorySelected:
                     text = { Text(text = category.name) },
                     onClick = {
                         dropDownOpen.value = false
-                        onCategorySelected(category) // Notify the selected category
+                        onCategorySelected(category)
                     }
                 )
             }
@@ -105,10 +85,8 @@ fun DropDownVideoCategories(selectedCategory: VideoCategory, onCategorySelected:
     }
 }
 
-// Composable for the local video player
 @Composable
 fun LocalVideoPlayer(videoResId: Int, isPlaying: Boolean) {
-    //var plays by remember { mutableStateOf(false) } // State for play/pause
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
             factory = { context ->
@@ -117,10 +95,9 @@ fun LocalVideoPlayer(videoResId: Int, isPlaying: Boolean) {
                     setVideoURI(uri)
 
                     setOnPreparedListener { mediaPlayer: MediaPlayer ->
-                        mediaPlayer.isLooping = true // Set looping to true
+                        mediaPlayer.isLooping = true
                         if (isPlaying) {
-                            //mediaPlayer.isLooping = true
-                            mediaPlayer.start() // Start video if playing
+                            mediaPlayer.start()
                         }
                     }
                 }
@@ -136,24 +113,13 @@ fun LocalVideoPlayer(videoResId: Int, isPlaying: Boolean) {
                 }
             }
         )
-        // Placeholder Image
         if (!isPlaying) {
             Image(
-                painter = painterResource(id = R.drawable.pause), // Replace with your placeholder image
+                painter = painterResource(id = R.drawable.pause),
                 contentDescription = "Video Placeholder",
                 modifier = Modifier.fillMaxSize()
             )
         }
-
-        // Play/Pause Button
-//        Button(
-//            onClick = { plays = !plays },
-//            modifier = Modifier
-//                .align(Alignment.BottomCenter)
-//                .padding(16.dp)
-//        ) {
-//            Text(text = if (plays) "Pause" else "Play")
-//        }
     }
 }
 
@@ -163,63 +129,41 @@ fun CountdownTimer(
     isPlaying: Boolean,
     phaseIndex: Int,
     onPlayPause: (Boolean,Int) -> Unit,
-    onVideoPlay: (Boolean) -> Unit // Callback to control video playback
+    onVideoPlay: (Boolean) -> Unit
 ) {
-    var timeRemains by remember { mutableStateOf(duration) } // Set the initial time in seconds
+    var timeRemains by remember { mutableStateOf(duration) }
     var timerAction by remember { mutableStateOf(false) }
-    var currentPhase by remember { mutableStateOf("Breathe in") } // Initial phase
-    var currentPhaseIndex by remember { mutableStateOf(phaseIndex) } // Track the current phase index
+    var currentPhase by remember { mutableStateOf("Breathe in") }
+    var currentPhaseIndex by remember { mutableStateOf(phaseIndex) }
 
-    // Define the durations for each phase
     val phases = listOf(
         Pair("Breathe in", 8),
         Pair("Hold", 4),
         Pair("Breathe out", 8)
     )
 
-    // Update the timer when the duration changes
     LaunchedEffect(duration) {
-        timeRemains = duration // Update timeRemains when duration changes
-        currentPhaseIndex = 0 // Reset phase index to start from "Breathe in"
-        currentPhase = phases[currentPhaseIndex].first // Reset current phase
+        timeRemains = duration
+        currentPhaseIndex = 0
+        currentPhase = phases[currentPhaseIndex].first
     }
 
     LaunchedEffect(timerAction) {
         if (timerAction) {
-            onVideoPlay(true) // Start video playback when timer starts
+            onVideoPlay(true)
             while (timeRemains > 0) {
-                // Get the current phase duration
                 val currentPhaseDuration = phases[currentPhaseIndex].second
                 currentPhase = phases[currentPhaseIndex].first
-                // Cycle through the phases
-                //currentPhase = "Breathe in"
                 for (i in 0 until currentPhaseDuration) {
                     if (!timerAction || timeRemains <= 0) break
-                    delay(1000) // Wait for 1 second
-                    timeRemains-- // Decrement the time left
+                    delay(1000)
+                    timeRemains--
                 }
-
-                if (timeRemains <= 0) break // Exit if time is up
-
-                // Move to the next phase
-                currentPhaseIndex = (currentPhaseIndex + 1) % phases.size // Loop back to the first phase
-//                currentPhase = "Hold"
-//                for (i in 0 until holdDuration) {
-//                    if (!timerAction || timeRemains <= 0) break
-//                    delay(1000) // Wait for 1 second
-//                    timeRemains-- // Decrement the time left
-//                }
-//
-//                if (timeRemains <= 0) break
-//                currentPhase = "Breathe out"
-//                for (i in 0 until breatheOutDuration) {
-//                    if (!timerAction || timeRemains <= 0) break
-//                    delay(1000) // Wait for 1 second
-//                    timeRemains-- // Decrement the time left
-//                }
-            } //CAUTION
-            timerAction = false // Stop the timer when it reaches 0
-            onVideoPlay(false) // Stop video playback when timer ends
+                if (timeRemains <= 0) break
+                currentPhaseIndex = (currentPhaseIndex + 1) % phases.size
+            }
+            timerAction = false
+            onVideoPlay(false)
         }
     }
 
@@ -234,21 +178,15 @@ fun CountdownTimer(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
-            // Toggle play/pause state
             val newPlayingState = !isPlaying
 
-            // Reset timer if it has ended
             if (timeRemains <= 0) {
-                timeRemains = duration // Reset to the original duration
-                currentPhaseIndex = 0 // Reset phase index to start from the beginning
+                timeRemains = duration
+                currentPhaseIndex = 0
                 currentPhase = phases[currentPhaseIndex].first
             }
-            // Start or stop the timer based on the new state
             timerAction = newPlayingState
-            // Update the play state
             onPlayPause(newPlayingState, currentPhaseIndex)
-        }) {
-            Text(if (isPlaying) "Pause" else "Play")
-        }
+        }) { Text(if (isPlaying) "Pause" else "Play") }
     }
 }
